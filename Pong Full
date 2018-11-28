@@ -1,0 +1,275 @@
+// Re Ann Jacob
+// 2018
+// Pong
+
+#include <stdio.h> 
+#include <allegro5/allegro.h>
+#include <allegro5\allegro_primitives.h>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_ttf.h>
+#include <iostream>
+
+using namespace std;
+
+bool Collisionright(int x, int y, int w, int h, int x2, int y2, int w2, int h2); 
+bool Collisionleft(int x, int y, int w, int h, int x2, int y2, int w2, int h2);
+
+const float FPS = 60;
+const int SCREEN_W = 800;
+const int SCREEN_H = 600;
+const int player1_SIZE = 20;
+const int player2_SIZE = 20;
+const int player1_H = 110;
+const int player2_H = 110;
+const int BOUNCER1_SIZE = 32;
+
+using namespace std;
+
+enum MYKEYS {
+	KEY_UP, KEY_DOWN, KEY_W, KEY_S, KEY_PRESS
+};
+
+int main()
+{
+	ALLEGRO_DISPLAY *display = NULL;
+	ALLEGRO_EVENT_QUEUE *event_queue = NULL;
+	ALLEGRO_TIMER *timer = NULL;
+	ALLEGRO_BITMAP *player1 = NULL;
+	ALLEGRO_BITMAP *player2 = NULL;
+	ALLEGRO_BITMAP *bouncer1 = NULL;
+
+	float player1_x = 700;
+	float player1_y = SCREEN_H / 2.0 - player1_SIZE / 2.0; // player 1
+
+	float player2_x = 100;
+	float player2_y = SCREEN_H / 3.0 - player2_SIZE / 2.0; // player 2
+
+	float bouncer1_x = SCREEN_W / 2.0 - BOUNCER1_SIZE / 2.0;
+	float bouncer1_y = SCREEN_H / 2.0 - BOUNCER1_SIZE / 8.0; // Ball
+	float bouncer1_dx = -4.0, bouncer1_dy = 4.0;
+
+	bool key[5] = { false, false, false, false, false }; 
+	bool redraw = true;
+	bool doexit = false;
+
+	int scorel = 0;
+	int scorer = 0;
+
+	al_init();
+	al_install_keyboard();
+	al_init_primitives_addon(); // Initializing
+	al_init_font_addon();
+	al_init_ttf_addon();
+
+	ALLEGRO_FONT *font = al_load_ttf_font("Geo-Regular.ttf", 75, 0); // fonts
+	ALLEGRO_FONT *font2 = al_load_ttf_font("Geo-Regular.ttf", 30, 0);
+	ALLEGRO_FONT *font3 = al_load_ttf_font("Geo-Regular.ttf", 110, 0);
+
+	timer = al_create_timer(1.0 / FPS);
+	display = al_create_display(SCREEN_W, SCREEN_H);
+
+	//copy paste these three together
+
+	player1 = al_create_bitmap(player1_SIZE, 100); // player 1
+	al_set_target_bitmap(player1);
+	al_clear_to_color(al_map_rgb(255, 0, 255));
+
+	/////////////////////////////////////
+
+	player2 = al_create_bitmap(player2_SIZE, 100); // player 2
+	al_set_target_bitmap(player2);
+	al_clear_to_color(al_map_rgb(255, 255, 0));
+
+	////////////////////////////////////
+
+	bouncer1 = al_create_bitmap(BOUNCER1_SIZE, BOUNCER1_SIZE); // ball
+	al_set_target_bitmap(bouncer1);
+	al_clear_to_color(al_map_rgb(255, 255, 255));
+
+	al_set_target_bitmap(al_get_backbuffer(display));
+	event_queue = al_create_event_queue();
+
+	al_register_event_source(event_queue, al_get_display_event_source(display));
+	al_register_event_source(event_queue, al_get_timer_event_source(timer));
+	al_register_event_source(event_queue, al_get_keyboard_event_source()); 
+
+	al_clear_to_color(al_map_rgb(0, 0, 0));
+
+	al_flip_display();
+	al_start_timer(timer);
+
+	while (!doexit)//game loop
+	{
+		ALLEGRO_EVENT ev;
+		al_wait_for_event(event_queue, &ev);
+		///////////////////////////////////////////////////////////////
+		if (ev.type == ALLEGRO_EVENT_TIMER) {
+			//collision for the players
+			if (Collisionright(player1_x, player1_y, 32, 110, bouncer1_x, bouncer1_y, 32, 110)) //1
+				bouncer1_dx *= -1;
+
+			if (Collisionleft(player2_x, player2_y, 32, 110, bouncer1_x, bouncer1_y, 32, 110)) //2
+				bouncer1_dx *= -1;
+
+			if (key[KEY_UP] && player1_y > 100) { // Movement up player 1
+
+				player1_y -= 4.0;
+			}
+
+			if (key[KEY_DOWN] && (player1_y + player1_H) < SCREEN_H) { // Movement down player 1
+
+				player1_y += 4.0;
+			}
+
+			if (key[KEY_W] && player2_y > 100) { // Movement up player 2
+
+				player2_y -= 4.0;
+			}
+
+			if (key[KEY_S] && (player2_y + player2_H) < SCREEN_H) { // Movement down player 2
+
+				player2_y += 4.0;
+			}
+
+			// Bouncer collision
+			if (bouncer1_x < 0 || bouncer1_x > SCREEN_W - BOUNCER1_SIZE) { 
+				bouncer1_dx = -bouncer1_dx;
+				cout << "flag" << endl;
+			}
+
+			if (bouncer1_y - 100 < 0 || bouncer1_y > SCREEN_H - BOUNCER1_SIZE) {
+				bouncer1_dy = -bouncer1_dy;
+			}
+
+			bouncer1_x += bouncer1_dx;
+			bouncer1_y += bouncer1_dy;
+
+			redraw = true;
+
+		
+		}
+
+		/////////////////////////////////////////////////////////////////// // timer
+
+		else if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+
+			break;
+
+		}
+
+		//////////////////////////////////////////////////////////////////// 
+		else if (ev.type == ALLEGRO_EVENT_KEY_DOWN) { // key down
+
+			switch (ev.keyboard.keycode) {
+
+			case ALLEGRO_KEY_UP:
+				key[KEY_UP] = true;
+				break;
+
+			case ALLEGRO_KEY_DOWN:
+				key[KEY_DOWN] = true;
+				break;
+
+			case ALLEGRO_KEY_W:
+				key[KEY_W] = true;
+				break;
+
+			case ALLEGRO_KEY_S:
+				key[KEY_S] = true;
+				break;
+
+			}
+		}
+		///////////////////////////////////////////////////////////////////
+		else if (ev.type == ALLEGRO_EVENT_KEY_UP) { // key up
+			
+			switch (ev.keyboard.keycode) {
+			
+			case ALLEGRO_KEY_UP:
+				key[KEY_UP] = false;
+				break;
+
+			case ALLEGRO_KEY_DOWN:
+				key[KEY_DOWN] = false;
+				break;
+
+			case ALLEGRO_KEY_ESCAPE:
+				doexit = true;
+				break;
+
+			case ALLEGRO_KEY_W:
+				key[KEY_W] = false;
+				break;
+
+			case ALLEGRO_KEY_S:
+				key[KEY_S] = false;
+				break;
+
+			}
+		}
+
+		if (bouncer1_x > 800 - BOUNCER1_SIZE) {
+			cout << "Score Right" << endl;
+			scorel++;
+			cout << scorel << endl;
+
+		}
+
+		if (bouncer1_x < 0) {
+			cout << "Score Left" << endl;
+			scorer++;
+			cout << scorer << endl;
+
+		}
+		/////////////////////////////////////////////////////////////////////
+		if (redraw && al_is_event_queue_empty(event_queue)) {
+			redraw = false;
+
+			al_clear_to_color(al_map_rgb(0, 0, 0)); // background
+			al_draw_bitmap(player1, player1_x, player1_y, 0); // player 1
+			al_draw_bitmap(player2, player2_x, player2_y, 0); // player 2
+			al_draw_bitmap(bouncer1, bouncer1_x, bouncer1_y, 0); // ball
+
+			al_draw_filled_rectangle(0, 800, 10, 0, al_map_rgb(255, 255, 255)); // left wall
+			al_draw_filled_rectangle(790, 0, 800, 600, al_map_rgb(255, 255, 255)); // right wall
+			al_draw_filled_rectangle(0, 590, 800, 600, al_map_rgb(255, 255, 255)); // bottom wall
+			al_draw_filled_rectangle(0, 0, 800, 100, al_map_rgb(255, 255, 255)); // top wall
+			al_draw_filled_rectangle(395, 0, 405, 600, al_map_rgb(255, 255, 255));// middle wall
+
+			al_draw_text(font, al_map_rgb(0, 0, 0), 400, 10, ALLEGRO_ALIGN_CENTRE, "||"); // Center divider
+			al_draw_textf(font, al_map_rgb(0, 0, 0), 350, 10, ALLEGRO_ALIGN_CENTRE, "%d", scorel); //  Score left
+			al_draw_textf(font, al_map_rgb(0, 0, 0), 450, 10, ALLEGRO_ALIGN_CENTRE, "%d", scorer); //  Score right
+
+			al_draw_text(font2, al_map_rgb(0, 0, 0), 60, 10, ALLEGRO_ALIGN_CENTRE, "The"); // Text
+			al_draw_text(font2, al_map_rgb(0, 0, 0), 60, 30, ALLEGRO_ALIGN_CENTRE, "Best");
+			al_draw_text(font2, al_map_rgb(0, 0, 0), 60, 50, ALLEGRO_ALIGN_CENTRE, "Pong");
+			al_draw_text(font3, al_map_rgb(0, 0, 0), 190, -10, ALLEGRO_ALIGN_CENTRE, "EVER");
+			al_flip_display();
+
+		}////////////////////////////////
+	}//end game loop
+
+	// destroy
+	al_destroy_bitmap(player1);
+	al_destroy_bitmap(player2);
+	al_destroy_bitmap(bouncer1);
+	al_destroy_timer(timer);
+	al_destroy_display(display);
+	al_destroy_event_queue(event_queue);
+
+	return 0;
+}
+
+bool Collisionright(int x, int y, int w, int h, int x2, int y2, int w2, int h2) { // collision for player 1
+	if ((x + w >= x2) && (x2 + w2 >= x) && (y + h >= y2) && (y2 + h2 >= y))
+		return true;
+	else
+		return false;
+}
+
+bool Collisionleft(int x, int y, int w, int h, int x2, int y2, int w2, int h2) { // collision for player 2
+	if ((x + w >= x2) && (x2 + w2 >= x) && (y + h >= y2) && (y2 + h2 >= y))
+		return true;
+	else
+		return false;
+}
