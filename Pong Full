@@ -68,6 +68,7 @@ int main()
 	timer = al_create_timer(1.0 / FPS);
 	display = al_create_display(SCREEN_W, SCREEN_H);
 
+
 	//copy paste these three together
 
 	player1 = al_create_bitmap(player1_SIZE, 100); // player 1
